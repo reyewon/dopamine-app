@@ -111,5 +111,11 @@ export function useEmailInquiries() {
 
   const unreadCount = inquiries.filter(i => !i.read && !i.addedAsShoot).length;
 
-  return { inquiries, unreadCount, gmailStatus, statusLoaded, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow };
+  // Allow manual refresh of status (e.g. after OAuth popup completes)
+  const refreshStatus = useCallback(async () => {
+    await fetchStatus();
+    await fetchInquiries();
+  }, [fetchStatus, fetchInquiries]);
+
+  return { inquiries, unreadCount, gmailStatus, statusLoaded, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow, refreshStatus };
 }

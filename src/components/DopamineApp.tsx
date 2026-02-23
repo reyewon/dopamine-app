@@ -85,8 +85,36 @@ const DopamineAppContent = ({ defaultView }) => {
   const [activeView, setActiveView] = useState(defaultView || 'projects');
 
   // Email inquiries from Gmail
-  const { inquiries, unreadCount, gmailStatus, statusLoaded, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow } = useEmailInquiries();
+  const { inquiries, unreadCount, gmailStatus, statusLoaded, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow, refreshStatus } = useEmailInquiries();
   const [showInquiriesPanel, setShowInquiriesPanel] = useState(false);
+
+  // Open Gmail OAuth in a popup window
+  const openGmailAuth = (account: string) => {
+    const url = `/api/gmail/auth?account=${account}`;
+    const w = 500, h = 700;
+    const left = window.screenX + (window.outerWidth - w) / 2;
+    const top = window.screenY + (window.outerHeight - h) / 2;
+    window.open(url, 'gmail-auth', `width=${w},height=${h},left=${left},top=${top},popup=1`);
+  };
+
+  // Listen for OAuth callback postMessage
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== 'https://dopamine-app.pages.dev') return;
+      if (event.data?.type === 'gmail-auth-complete') {
+        // Refresh status and inquiries after successful auth
+        refreshStatus();
+        if (event.data.success) {
+          toast({
+            title: 'Gmail connected',
+            description: `${event.data.account === 'photography' ? 'photography@ryanstanikk.co.uk' : 'rstanikk@gmail.com'} is now linked.`,
+          });
+        }
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [refreshStatus, toast]);
 
   // Sync to localStorage + KV whenever data changes
   useEffect(() => {
@@ -820,12 +848,12 @@ const DopamineAppContent = ({ defaultView }) => {
                     <p className="text-sm">Connect your Gmail accounts</p>
                     <p className="text-xs mt-2">Start detecting shoot enquiries automatically.</p>
                     <div className="mt-6 flex flex-col gap-2 w-full">
-                      <a href="/api/gmail/auth?account=photography" className="block text-center text-xs py-2 px-4 rounded bg-white/10 hover:bg-white/20 text-white transition-colors">
+                      <button onClick={() => openGmailAuth('photography')} className="block w-full text-center text-xs py-2 px-4 rounded bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer">
                         Connect photography@ryanstanikk.co.uk
-                      </a>
-                      <a href="/api/gmail/auth?account=personal" className="block text-center text-xs py-2 px-4 rounded bg-white/10 hover:bg-white/20 text-white transition-colors">
+                      </button>
+                      <button onClick={() => openGmailAuth('personal')} className="block w-full text-center text-xs py-2 px-4 rounded bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer">
                         Connect rstanikk@gmail.com
-                      </a>
+                      </button>
                     </div>
                   </div>
                 ) : inquiries.length === 0 ? (
@@ -897,20 +925,20 @@ const DopamineAppContent = ({ defaultView }) => {
 
               <div className="p-3 border-t border-white/10">
                 <div className="flex gap-2">
-                  <a
-                    href="/api/gmail/auth?account=photography"
-                    className={`flex-1 text-center text-xs py-1.5 rounded border transition-colors ${gmailStatus.photography ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
+                  <button
+                    onClick={() => openGmailAuth('photography')}
+                    className={`flex-1 text-center text-xs py-1.5 rounded border transition-colors cursor-pointer ${gmailStatus.photography ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
                     title={gmailStatus.photography ? 'Reconnect photography@ryanstanikk.co.uk' : 'Connect photography@ryanstanikk.co.uk'}
                   >
                     {gmailStatus.photography ? '✓ photography@' : 'Connect photography@'}
-                  </a>
-                  <a
-                    href="/api/gmail/auth?account=personal"
-                    className={`flex-1 text-center text-xs py-1.5 rounded border transition-colors ${gmailStatus.personal ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
+                  </button>
+                  <button
+                    onClick={() => openGmailAuth('personal')}
+                    className={`flex-1 text-center text-xs py-1.5 rounded border transition-colors cursor-pointer ${gmailStatus.personal ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
                     title={gmailStatus.personal ? 'Reconnect rstanikk@gmail.com' : 'Connect rstanikk@gmail.com'}
                   >
                     {gmailStatus.personal ? '✓ rstanikk@gmail' : 'Connect rstanikk@gmail'}
-                  </a>
+                  </button>
                 </div>
               </div>
             </div>

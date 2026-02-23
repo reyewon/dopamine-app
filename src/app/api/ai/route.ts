@@ -5,6 +5,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getRequestContext } from '@cloudflare/next-on-pages';
 import { z } from 'zod';
 
 const ProjectOutputSchema = z.object({
@@ -56,7 +57,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+    // Access Cloudflare env bindings via getRequestContext (edge runtime)
+    let apiKey: string | undefined;
+    try {
+      const ctx = getRequestContext();
+      const cfEnv = ctx.env as Record<string, string | undefined>;
+      apiKey = cfEnv.GEMINI_API_KEY || cfEnv.GOOGLE_GENAI_API_KEY;
+    } catch {
+      // fallback — local dev or non-Cloudflare environment
+    }
+    apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+
     if (!apiKey) {
       return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
     }

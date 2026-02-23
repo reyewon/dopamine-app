@@ -5,7 +5,7 @@ pages_build_output_dir = ".vercel/output/static"
 
 [[kv_namespaces]]
 binding = "DOPAMINE_KV"
-id = "PLACEHOLDER_KV_ID"
+id = "87ca3bca728943c9bd81d93320dede26"
 
 [vars]
 GEMINI_API_KEY = ""

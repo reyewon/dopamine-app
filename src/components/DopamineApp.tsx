@@ -18,6 +18,7 @@ import SettingsView from './SettingsView';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { ImageLightbox } from './ImageLightbox';
 import ShootsView from './ShootsView';
+import HomeView from './HomeView';
 import { AddShootModal } from './AddShootModal';
 import { EditShootModal } from './EditShootModal';
 import { MagicAiInput } from './MagicAiInput';
@@ -66,7 +67,7 @@ const DopamineAppContent = ({ defaultView }) => {
   const searchParams = useSearchParams();
   const projectIdFromQuery = searchParams.get('projectId');
   
-  const [selectedProjectId, setSelectedProjectId] = useState(projectIdFromQuery || initialProjects[0].id);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(projectIdFromQuery || null);
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -364,6 +365,8 @@ const DopamineAppContent = ({ defaultView }) => {
     router.push(path);
     setActiveView(view);
     setIsSidebarOpen(false);
+    // Return to dashboard when going to projects root
+    if (view === 'projects') setSelectedProjectId(null);
   };
 
   const handleAddShootFromInquiry = (inquiry) => {
@@ -777,22 +780,31 @@ const DopamineAppContent = ({ defaultView }) => {
         return (
           <div className="flex-1 flex flex-col overflow-y-auto">
             {contentHeader}
-            <MainContent
-              project={selectedProject}
-              allProjects={projects}
-              onAddTask={() => setAddTaskModalOpen(true)}
-              onEditProject={() => setEditProjectModalOpen(true)}
-              onDeleteProject={handleDeleteProject}
-              onEditTask={setEditingTask}
-              onDeleteTask={handleDeleteTask}
-              onToggleTask={handleToggleTask}
-              onToggleSubtask={handleToggleSubtask}
-              onFileUpload={handleFileUpload}
-              onRecordVoiceNote={setRecordingTask}
-              onDeleteAttachment={handleDeleteAttachment}
-              onDeleteSubtask={handleDeleteSubtask}
-              onViewImage={setLightboxImageUrl}
-            />
+            {selectedProject ? (
+              <MainContent
+                project={selectedProject}
+                allProjects={projects}
+                onAddTask={() => setAddTaskModalOpen(true)}
+                onEditProject={() => setEditProjectModalOpen(true)}
+                onDeleteProject={handleDeleteProject}
+                onEditTask={setEditingTask}
+                onDeleteTask={handleDeleteTask}
+                onToggleTask={handleToggleTask}
+                onToggleSubtask={handleToggleSubtask}
+                onFileUpload={handleFileUpload}
+                onRecordVoiceNote={setRecordingTask}
+                onDeleteAttachment={handleDeleteAttachment}
+                onDeleteSubtask={handleDeleteSubtask}
+                onViewImage={setLightboxImageUrl}
+              />
+            ) : (
+              <HomeView
+                shoots={shoots}
+                projects={projects}
+                onNavigateToShoots={() => handleNavigate('shoots')}
+                onSelectProject={handleSelectProject}
+              />
+            )}
           </div>
         );
     }

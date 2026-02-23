@@ -51,7 +51,21 @@ async function refreshAccessToken(refreshToken: string, clientId: string, client
 }
 
 async function fetchGmailMessages(accessToken: string, afterTimestamp: number): Promise<{ id: string; threadId: string }[]> {
-  const query = `is:inbox after:${Math.floor(afterTimestamp / 1000)} -from:me`;
+  // Pre-filter at Gmail level: inbox only, not sent by user, exclude common spam/service senders
+  const query = [
+    'is:inbox',
+    `after:${Math.floor(afterTimestamp / 1000)}`,
+    '-from:me',
+    '-from:noreply',
+    '-from:donotreply',
+    '-from:no-reply',
+    '-from:mailchimp',
+    '-from:newsletter',
+    '-from:notifications',
+    '-category:promotions',
+    '-category:updates',
+    '-category:social',
+  ].join(' ');
   const res = await fetch(
     `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=10`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -94,17 +108,34 @@ async function fetchEmailContent(accessToken: string, messageId: string): Promis
 }
 
 async function classifyWithGemini(apiKey: string, email: { subject: string; from: string; body: string }): Promise<{ isInquiry: boolean; extractedData: EmailInquiry['extractedData'] }> {
-  const prompt = `You are analysing an email to determine if it's a photography shoot inquiry for a freelance commercial photographer.
+  const prompt = `You are a strict email filter for Ryan Stanikk, a freelance commercial photographer based in Southampton, UK.
 
-Email:
+Your ONLY job is to identify genuine shoot booking enquiries from real potential clients — someone who actually wants to hire Ryan to photograph something for them.
+
+Email to analyse:
 Subject: ${email.subject}
 From: ${email.from}
 Body: ${email.body}
 
-Return ONLY valid JSON in this exact format:
-{"isInquiry": true/false, "clientName": "name or null", "clientEmail": "email or null", "clientPhone": "UK format or null", "shootType": "type of shoot or null", "shootDate": "YYYY-MM-DD or null", "location": "location or null", "notes": "any other relevant info or null"}
+IMMEDIATELY return isInquiry: false for ANY of the following — no exceptions:
+- Photo editing, retouching, culling, or clipping mask services
+- SEO, web design, digital marketing, or social media services
+- Cold sales pitches or "we can help your business" emails
+- Newsletters, mailing lists, or automated marketing emails
+- Unsolicited offers from other photographers or creative agencies
+- Anyone offering outsourced services (editing, printing, album design, etc.)
+- Emails from noreply@, donotreply@, or obvious automated senders
+- Emails that don't mention hiring a photographer or booking a shoot
+- Generic "hi I found your website" opener with a sales pitch
+- Any email where the sender is trying to sell Ryan something
 
-isInquiry should be true if this is someone enquiring about booking a photography session. Return false for spam, newsletters, invoices, or unrelated emails.`;
+Return isInquiry: true ONLY if ALL of these are true:
+1. A real human is writing to Ryan to enquire about booking him as a photographer
+2. The email is clearly about a specific shoot (wedding, portrait, commercial, event, product, etc.)
+3. There is no sign the sender is a business trying to sell services
+
+Return ONLY valid JSON, no markdown:
+{"isInquiry": true/false, "clientName": "name or null", "clientEmail": "reply-to email or null", "clientPhone": "UK format or null", "shootType": "e.g. wedding/portrait/commercial/product/event or null", "shootDate": "YYYY-MM-DD or null", "location": "location or null", "notes": "budget, brief, or other key details or null"}`;
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${apiKey}`,

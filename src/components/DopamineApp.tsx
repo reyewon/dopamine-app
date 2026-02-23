@@ -90,6 +90,43 @@ const DopamineAppContent = ({ defaultView }) => {
   const { inquiries, unreadCount, gmailStatus, statusLoaded, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow, refreshStatus } = useEmailInquiries();
   const [showInquiriesPanel, setShowInquiriesPanel] = useState(false);
 
+  // Google Calendar connection status
+  const [calendarConnected, setCalendarConnected] = useState(false);
+  useEffect(() => {
+    fetch('/api/calendar').then(r => r.json()).then((d: { connected?: boolean }) => {
+      if (d.connected) setCalendarConnected(true);
+    }).catch(() => {});
+  }, []);
+
+  // Open Calendar OAuth in a popup window
+  const openCalendarAuth = () => {
+    const w = 500, h = 700;
+    const left = window.screenX + (window.outerWidth - w) / 2;
+    const top = window.screenY + (window.outerHeight - h) / 2;
+    window.open('/api/calendar/auth', 'calendar-auth', `width=${w},height=${h},left=${left},top=${top},popup=1`);
+  };
+
+  // Silently push a new shoot to the Photography Google Calendar
+  const addShootToCalendar = async (shoot: { title: string; shootDate: Date | null; location?: string; clientName?: string; price?: number }) => {
+    if (!shoot.shootDate) return;
+    const dateStr = new Date(shoot.shootDate).toISOString().split('T')[0];
+    try {
+      await fetch('/api/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: shoot.title,
+          shootDate: dateStr,
+          location: shoot.location,
+          clientName: shoot.clientName,
+          price: shoot.price,
+        }),
+      });
+    } catch (err) {
+      console.warn('Calendar sync skipped:', err);
+    }
+  };
+
   // Open Gmail OAuth in a popup window
   const openGmailAuth = (account: string) => {
     const url = `/api/gmail/auth?account=${account}`;
@@ -99,17 +136,25 @@ const DopamineAppContent = ({ defaultView }) => {
     window.open(url, 'gmail-auth', `width=${w},height=${h},left=${left},top=${top},popup=1`);
   };
 
-  // Listen for OAuth callback postMessage
+  // Listen for OAuth callback postMessages (Gmail + Calendar)
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.origin !== 'https://dopamine-app.pages.dev') return;
       if (event.data?.type === 'gmail-auth-complete') {
-        // Refresh status and inquiries after successful auth
         refreshStatus();
         if (event.data.success) {
           toast({
             title: 'Gmail connected',
             description: `${event.data.account === 'photography' ? 'photography@ryanstanikk.co.uk' : 'rstanikk@gmail.com'} is now linked.`,
+          });
+        }
+      }
+      if (event.data?.type === 'calendar-auth-complete') {
+        if (event.data.success) {
+          setCalendarConnected(true);
+          toast({
+            title: 'Google Calendar connected',
+            description: 'New shoots will be added to your Photography calendar automatically.',
           });
         }
       }
@@ -208,6 +253,7 @@ const DopamineAppContent = ({ defaultView }) => {
               draft.unshift(newShoot);
             });
             setShoots(newShoots);
+            addShootToCalendar(newShoot);
 
             toast({
               title: "AI Shoot Scheduled!",
@@ -359,6 +405,7 @@ const DopamineAppContent = ({ defaultView }) => {
       draft.unshift(updatedShoot);
     });
     setShoots(newShoots);
+    addShootToCalendar(updatedShoot);
     setShowInquiriesPanel(false);
     markInquiryAsAdded(inquiry.id);
     toast({
@@ -611,6 +658,7 @@ const DopamineAppContent = ({ defaultView }) => {
       draft.unshift(newShoot);
     });
     setShoots(newShoots);
+    addShootToCalendar(newShoot);
     setAddShootModalOpen(false);
     toast({
       title: "Shoot added!",
@@ -930,7 +978,7 @@ const DopamineAppContent = ({ defaultView }) => {
               </div>
 
               <div className="p-3 border-t border-white/10">
-                <div className="flex gap-2">
+                <div className="flex gap-2 mb-2">
                   <button
                     onClick={() => openGmailAuth('photography')}
                     className={`flex-1 text-center text-xs py-1.5 rounded border transition-colors cursor-pointer ${gmailStatus.photography ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
@@ -946,6 +994,13 @@ const DopamineAppContent = ({ defaultView }) => {
                     {gmailStatus.personal ? '✓ rstanikk@gmail' : 'Connect rstanikk@gmail'}
                   </button>
                 </div>
+                <button
+                  onClick={openCalendarAuth}
+                  className={`w-full text-center text-xs py-1.5 rounded border transition-colors cursor-pointer ${calendarConnected ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
+                  title={calendarConnected ? 'Reconnect Google Calendar' : 'Connect Google Calendar (Photography)'}
+                >
+                  {calendarConnected ? '✓ Google Calendar connected' : '📅 Connect Google Calendar'}
+                </button>
               </div>
             </div>
           </div>

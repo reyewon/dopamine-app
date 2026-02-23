@@ -19,6 +19,7 @@ const ShootOutputSchema = z.object({
   clientPhone: z.string().nullish(),
   location: z.string().nullish(),
   shootDate: z.string().nullish(),
+  shootTime: z.string().nullish(),
   editDueDate: z.string().nullish(),
   price: z.number().nullish(),
   notes: z.string().nullish(),

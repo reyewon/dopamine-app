@@ -21,6 +21,7 @@ const ShootOutputSchema = z.object({
   clientPhone: z.string().nullish(),
   location: z.string().nullish(),
   shootDate: z.string().nullish(),
+  shootTime: z.string().nullish(),
   editDueDate: z.string().nullish(),
   price: z.number().nullish(),
   notes: z.string().nullish(),
@@ -43,7 +44,7 @@ If PROJECT, return exactly:
 {"type":"project","title":"concise project name","tasks":["task 1","task 2","task 3","task 4"]}
 
 If SHOOT, return exactly:
-{"type":"shoot","title":"shoot title or null","clientName":"name or null","clientEmail":"email or null","clientPhone":"UK format or null","shootDate":"YYYY-MM-DD or null","editDueDate":"YYYY-MM-DD (shootDate+14 if missing) or null","location":"full address or null","price":number or null,"notes":"extra info or null"}
+{"type":"shoot","title":"shoot title or null","clientName":"name or null","clientEmail":"email or null","clientPhone":"UK format or null","shootDate":"YYYY-MM-DD or null","shootTime":"HH:MM (24h GMT) or null","editDueDate":"YYYY-MM-DD (shootDate+14 if missing) or null","location":"full address or null","price":number or null,"notes":"extra info or null"}
 
 Parse every detail from the input. Use null for any missing field. Output raw JSON only.`;
 }

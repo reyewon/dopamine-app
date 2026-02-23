@@ -120,7 +120,13 @@ const IncomeDashboard = ({ shoots }) => {
 
 
 const ShootsView = ({ shoots, onAddShoot, onEditShoot, onShootUpdate, onDeleteShoot }) => {
-    const upcomingShoots = shoots.filter(shoot => !shoot.progress.exportUpload);
+    const upcomingShoots = shoots
+        .filter(shoot => !shoot.progress.exportUpload)
+        .sort((a, b) => {
+            if (!a.shootDate) return 1;
+            if (!b.shootDate) return -1;
+            return new Date(a.shootDate).getTime() - new Date(b.shootDate).getTime();
+        });
     const completedShoots = shoots.filter(shoot => shoot.progress.exportUpload);
 
     return (

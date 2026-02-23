@@ -125,7 +125,7 @@ const DopamineAppContent = ({ defaultView }) => {
   };
 
   // Silently push a new shoot to the Photography Google Calendar
-  const addShootToCalendar = async (shoot: { title: string; shootDate: Date | null; location?: string; clientName?: string; price?: number }) => {
+  const addShootToCalendar = async (shoot: { title: string; shootDate: Date | null; shootTime?: string; location?: string; clientName?: string; price?: number }) => {
     if (!shoot.shootDate) return;
     const dateStr = new Date(shoot.shootDate).toISOString().split('T')[0];
     try {
@@ -135,6 +135,7 @@ const DopamineAppContent = ({ defaultView }) => {
         body: JSON.stringify({
           title: shoot.title,
           shootDate: dateStr,
+          shootTime: shoot.shootTime || null,
           location: shoot.location,
           clientName: shoot.clientName,
           price: shoot.price,
@@ -257,6 +258,7 @@ const DopamineAppContent = ({ defaultView }) => {
               clientEmail: result.clientEmail || '',
               clientContact: result.clientPhone || '',
               shootDate: shootDate,
+              shootTime: result.shootTime || '',
               editDueDate: editDueDate,
               location: result.location || 'TBD',
               price: result.price || 0,

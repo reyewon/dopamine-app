@@ -15,6 +15,7 @@ export const EditShootModal = ({ isOpen, onClose, onEditShoot, shoot }) => {
     const [clientContact, setClientContact] = useState('');
     const [location, setLocation] = useState('');
     const [shootDate, setShootDate] = useState<Date | null>(null);
+    const [shootTime, setShootTime] = useState('');
     const [editDueDate, setEditDueDate] = useState<Date | null>(null);
     const [price, setPrice] = useState<number | ''>('');
     const [notes, setNotes] = useState('');
@@ -28,13 +29,14 @@ export const EditShootModal = ({ isOpen, onClose, onEditShoot, shoot }) => {
             setClientContact(shoot.clientContact || '');
             setLocation(shoot.location || '');
             setShootDate(shoot.shootDate ? new Date(shoot.shootDate) : null);
+            setShootTime(shoot.shootTime || '');
             setEditDueDate(shoot.editDueDate ? new Date(shoot.editDueDate) : null);
             setPrice(shoot.price || '');
             setNotes(shoot.frictionLog || '');
             setIsInitialLoad(true);
         }
     }, [shoot]);
-    
+
     useEffect(() => {
         if (!isInitialLoad && shootDate) {
             setEditDueDate(add(shootDate, { days: 14 }));
@@ -45,25 +47,27 @@ export const EditShootModal = ({ isOpen, onClose, onEditShoot, shoot }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!title || !shoot) return;
-        onEditShoot({ 
+        onEditShoot({
             ...shoot,
-            title, 
-            clientName, 
+            title,
+            clientName,
             clientEmail,
-            clientContact, 
-            location, 
+            clientContact,
+            location,
             shootDate,
+            shootTime,
             editDueDate,
             price: Number(price),
-            frictionLog: notes
+            frictionLog: notes,
         });
+        onClose();
     };
-    
+
     if (!shoot) return null;
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Edit Shoot</DialogTitle>
                     <DialogDescription>
@@ -84,30 +88,38 @@ export const EditShootModal = ({ isOpen, onClose, onEditShoot, shoot }) => {
                             <Label htmlFor="clientEmail" className="text-right">Email</Label>
                             <Input id="clientEmail" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} className="col-span-3" placeholder="e.g., name@example.com" />
                         </div>
-                         <div className="grid grid-cols-4 items-center gap-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="clientContact" className="text-right">Phone</Label>
                             <Input id="clientContact" type="tel" value={clientContact} onChange={(e) => setClientContact(e.target.value)} className="col-span-3" placeholder="e.g., +447..." />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="location" className="text-right">Location</Label>
-                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="col-span-3" placeholder="e.g., 123 Blossom St, Valencia" />
+                            <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="col-span-3" placeholder="e.g., 123 Blossom St" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="shootDate" className="text-right">Shoot Date</Label>
                             <DatePicker date={shootDate} setDate={setShootDate} />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="shootTime" className="text-right">Start Time <span className="block text-[10px] text-muted-foreground font-normal">(GMT)</span></Label>
+                            <Input
+                                id="shootTime"
+                                type="time"
+                                value={shootTime}
+                                onChange={(e) => setShootTime(e.target.value)}
+                                className="col-span-3"
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="editDueDate" className="text-right">Edit Due Date</Label>
                             <DatePicker date={editDueDate} setDate={setEditDueDate} />
                         </div>
-                         <div className="grid grid-cols-4 items-center gap-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="price" className="text-right">Agreed Price (£)</Label>
                             <Input id="price" type="number" value={price} onChange={(e) => setPrice(e.target.value === '' ? '' : parseFloat(e.target.value))} className="col-span-3" />
                         </div>
-                         <div className="grid grid-cols-4 items-start gap-4">
-                            <Label htmlFor="notes" className="text-right">
-                                Notes
-                            </Label>
+                        <div className="grid grid-cols-4 items-start gap-4">
+                            <Label htmlFor="notes" className="text-right">Notes</Label>
                             <Textarea
                                 id="notes"
                                 value={notes}

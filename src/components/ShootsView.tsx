@@ -1,11 +1,22 @@
 'use client';
-import React from 'react';
-import { Plus, Camera, CheckCircle2, TrendingUp, AlertTriangle, FileText, BadgeCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Camera, CheckCircle2, TrendingUp, AlertTriangle, FileText, BadgeCheck, RefreshCw } from 'lucide-react';
 import { ShootCard } from './ShootCard';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
+interface PixiesetInvoice {
+    id: string;
+    number?: string;
+    amount?: number;
+    client?: string;
+    project?: string;
+    status?: 'paid' | 'unpaid' | 'draft' | 'cancelled';
+    dueDate?: string;
+    createdDate?: string;
+}
+
 const AddShootCard = ({ onClick }) => (
-    <button 
+    <button
         onClick={onClick}
         className="flex flex-col h-full rounded-3xl border-2 border-dashed border-border hover:border-primary hover:text-primary transition-all text-muted-foreground items-center justify-center p-8 group min-h-[400px]"
     >
@@ -21,26 +32,64 @@ const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(amount);
 };
 
+/** Parse a Pixieset date string like "Feb 14, 2026" into a Date */
+function parsePixiesetDate(str?: string): Date | null {
+    if (!str) return null;
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+}
+
 const IncomeDashboard = ({ shoots }) => {
+    const [invoices, setInvoices] = useState<PixiesetInvoice[]>([]);
+
+    useEffect(() => {
+        fetch('/api/invoices')
+            .then(r => r.json())
+            .then((data: PixiesetInvoice[]) => {
+                if (Array.isArray(data)) setInvoices(data);
+            })
+            .catch(() => {});
+    }, []);
+
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    const incomingRevenue = shoots
+    // Shoot-based figures
+    const shootIncoming = shoots
         .filter(s => s.invoiceStatus === 'Sent' || s.invoiceStatus === 'Overdue')
         .reduce((acc, s) => acc + (s.price || 0), 0);
-    
-    const overduePayments = shoots
+
+    const shootOverdue = shoots
         .filter(s => s.invoiceStatus === 'Overdue')
         .reduce((acc, s) => acc + (s.price || 0), 0);
 
-    const paidThisMonth = shoots
+    const shootPaidThisMonth = shoots
         .filter(s => {
             if (s.invoiceStatus !== 'Paid' || !s.shootDate) return false;
             const shootDate = new Date(s.shootDate);
             return shootDate.getMonth() === currentMonth && shootDate.getFullYear() === currentYear;
         })
         .reduce((acc, s) => acc + (s.price || 0), 0);
+
+    // Pixieset invoice figures
+    const pixUnpaid = invoices
+        .filter(inv => inv.status === 'unpaid')
+        .reduce((acc, inv) => acc + (inv.amount || 0), 0);
+
+    const pixPaidThisMonth = invoices
+        .filter(inv => {
+            if (inv.status !== 'paid') return false;
+            const d = parsePixiesetDate(inv.createdDate);
+            if (!d) return false;
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        })
+        .reduce((acc, inv) => acc + (inv.amount || 0), 0);
+
+    // Combined totals
+    const incomingRevenue = shootIncoming + pixUnpaid;
+    const overduePayments = shootOverdue + pixUnpaid;
+    const paidThisMonth = shootPaidThisMonth + pixPaidThisMonth;
 
     return (
          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

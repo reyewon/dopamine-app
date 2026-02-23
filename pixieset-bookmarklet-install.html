@@ -1,367 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixieset Bookmarklet Installer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 600px;
-            width: 100%;
-        }
-
-        .card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            color: #fff;
-        }
-
-        .subtitle {
-            color: #94a3b8;
-            margin-bottom: 30px;
-            font-size: 16px;
-        }
-
-        .install-button {
-            display: inline-block;
-            background: #a78bfa;
-            color: #0f172a;
-            padding: 16px 32px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: grab;
-            user-select: none;
-            margin-bottom: 30px;
-            transition: all 0.2s;
-            border: 2px solid #a78bfa;
-        }
-
-        .install-button:hover {
-            background: #c4b5fd;
-            color: #0f172a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(167, 139, 250, 0.3);
-        }
-
-        .install-button:active {
-            cursor: grabbing;
-        }
-
-        .instruction-box {
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-            color: #cbd5e1;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .instruction-box strong {
-            color: #a78bfa;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .steps {
-            margin-top: 30px;
-        }
-
-        .step {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #334155;
-        }
-
-        .step:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .step-number {
-            flex-shrink: 0;
-            width: 32px;
-            height: 32px;
-            background: #a78bfa;
-            color: #0f172a;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-        }
-
-        .step-content {
-            flex: 1;
-            padding-top: 2px;
-        }
-
-        .step-content p {
-            color: #e2e8f0;
-            line-height: 1.6;
-            margin-bottom: 8px;
-        }
-
-        .step-content code {
-            background: #0f172a;
-            color: #a78bfa;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 13px;
-            font-family: 'Monaco', 'Courier New', monospace;
-        }
-
-        .warning {
-            background: #1e3a5f;
-            border-left: 4px solid #f59e0b;
-            padding: 12px 16px;
-            border-radius: 4px;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #fcd34d;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixieset Bookmarklet Installer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.card{max-width:600px;background:#1e293b;border-radius:12px;padding:40px;box-shadow:0 10px 40px rgba(0,0,0,0.3)}
+h1{font-size:28px;margin-bottom:8px;color:#fff}
+.sub{color:#94a3b8;margin-bottom:24px}
+.drag{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px;margin-bottom:20px;color:#a78bfa;font-weight:600}
+.btn{display:inline-block;background:#a78bfa;color:#0f172a;padding:16px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:16px;cursor:grab;margin-bottom:28px;border:2px solid #a78bfa;transition:all 0.2s}
+.btn:hover{background:#c4b5fd;transform:translateY(-2px);box-shadow:0 4px 12px rgba(167,139,250,0.3)}
+.btn:active{cursor:grabbing}
+.steps{margin-top:24px}
+.step{display:flex;gap:14px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #334155}
+.step:last-child{border:none;margin-bottom:0;padding-bottom:0}
+.num{flex-shrink:0;width:30px;height:30px;background:#a78bfa;color:#0f172a;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700}
+.step p{color:#e2e8f0;line-height:1.5}
+code{background:#0f172a;color:#a78bfa;padding:2px 6px;border-radius:3px;font-size:13px}
+.warn{background:#1e3a5f;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:4px;margin-top:20px;font-size:14px;color:#fcd34d}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <h1>Pixieset Bookmarklet</h1>
-            <p class="subtitle">Invoice Scraper for Pixieset Studio</p>
-
-            <div class="instruction-box">
-                <strong>Drag the purple button to your bookmarks bar (don't click - drag)</strong>
-            </div>
-
-            <a href="javascript: (function () {
-  'use strict';
-
-  // Helper to show toast notifications
-  function showNotification(message, isError) {
-    if (isError === undefined) isError = false;
-    var notification = document.createElement('div');
-    notification.style.cssText = [
-      'position:fixed',
-      'top:20px',
-      'right:20px',
-      'padding:12px 20px',
-      'border-radius:6px',
-      'font-size:14px',
-      'font-family:-apple-system,BlinkMacSystemFont,sans-serif',
-      'z-index:2147483647',
-      'max-width:320px',
-      'line-height:1.4',
-      'word-break:break-word',
-      'box-shadow:0 4px 16px rgba(0,0,0,0.25)',
-      isError ? 'background:#ef4444;color:#fff' : 'background:#10b981;color:#fff',
-    ].join(';');
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    setTimeout(function () {
-      notification.style.transition = 'opacity 0.3s';
-      notification.style.opacity = '0';
-      setTimeout(function () { notification.remove(); }, 350);
-    }, 5000);
-    return notification;
-  }
-
-  // Scrape invoices from the table — tries multiple selectors
-  function scrapeInvoices() {
-    var invoices = [];
-
-    // Try various selectors Pixieset might use
-    var rows = Array.from(
-      document.querySelectorAll('table tbody tr')
-    );
-
-    if (rows.length === 0) {
-      // Pixieset may use a list or div-based layout
-      rows = Array.from(document.querySelectorAll('[class*=&quot;invoice&quot;][class*=&quot;row&quot;], [class*=&quot;InvoiceRow&quot;], [data-testid*=&quot;invoice&quot;]'));
-    }
-
-    if (rows.length === 0) {
-      // Fallback: grab all &lt;tr&gt; on the page
-      rows = Array.from(document.querySelectorAll('tr')).filter(function (r) {
-        return r.querySelectorAll('td').length &gt;= 3;
-      });
-    }
-
-    if (rows.length === 0) {
-      showNotification('No invoices found. Make sure you are on studio.pixieset.com/invoices and the page has loaded fully.', true);
-      return null;
-    }
-
-    rows.forEach(function (row) {
-      var cells = row.querySelectorAll('td');
-      if (cells.length &lt; 3) return; // Skip rows with too few cells
-
-      try {
-        // Try to identify columns — Pixieset layout: #, Client, Project, Amount, Status, Due, Created
-        var invoiceNumber = (cells[0] ? cells[0].textContent : '').trim();
-        var clientName    = (cells[1] ? cells[1].textContent : '').trim();
-        var projectName   = (cells[2] ? cells[2].textContent : '').trim();
-        var amountStr     = (cells[3] ? cells[3].textContent : '').trim().replace(/[^\d.-]/g, '');
-        var statusStr     = (cells[4] ? cells[4].textContent : '').trim().toLowerCase();
-        var dueDate       = (cells[5] ? cells[5].textContent : '').trim();
-        var createdDate   = (cells[6] ? cells[6].textContent : '').trim();
-
-        if (!invoiceNumber) return; // Skip rows without invoice number
-
-        var amount = amountStr ? parseFloat(amountStr) : undefined;
-
-        var status = 'draft';
-        if (statusStr.includes('paid')) {
-          status = 'paid';
-        } else if (statusStr.includes('unpaid') || statusStr.includes('due')) {
-          status = 'unpaid';
-        } else if (statusStr.includes('cancel')) {
-          status = 'cancelled';
-        } else if (statusStr.includes('draft')) {
-          status = 'draft';
-        }
-
-        invoices.push({
-          id: 'pix-' + invoiceNumber,
-          number: invoiceNumber,
-          amount: (isNaN(amount) || amount === undefined) ? undefined : amount,
-          client: clientName || undefined,
-          project: projectName || undefined,
-          status: status,
-          dueDate: dueDate || undefined,
-          createdDate: createdDate || undefined,
-        });
-      } catch (err) {
-        console.error('Pixieset scraper: error parsing row', err);
-      }
-    });
-
-    if (invoices.length === 0) {
-      showNotification('Found table rows but could not extract any invoices. The page layout may have changed — please check the console for details.', true);
-      return null;
-    }
-
-    return invoices;
-  }
-
-  // Send to dopamine-app
-  function sendToDopamineApp(invoices) {
-    return fetch('https://dopamine-app.pages.dev/api/invoices', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(invoices),
-    }).then(function (response) {
-      if (!response.ok) {
-        console.warn('Dopamine app sync returned non-200 status:', response.status);
-      }
-    }).catch(function (err) {
-      console.error('Error sending to dopamine-app:', err);
-    });
-  }
-
-  // Send to command-centre (legacy)
-  function sendToCommandCentre(invoices) {
-    return fetch('https://command-centre-rho.vercel.app/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: 'pixieset-invoices', value: invoices }),
-    }).then(function (response) {
-      if (!response.ok) {
-        console.warn('Command centre sync returned non-200 status:', response.status);
-      }
-    }).catch(function (err) {
-      console.error('Error sending to command-centre:', err);
-    });
-  }
-
-  // Main
-  var notice = showNotification('Pixieset Scraper: scanning page...');
-
-  setTimeout(function () {
-    var invoices = scrapeInvoices();
-    if (!invoices) return;
-
-    if (notice &amp;&amp; notice.parentNode) notice.remove();
-    showNotification('Found ' + invoices.length + ' invoice(s). Syncing...');
-
-    Promise.all([
-      sendToDopamineApp(invoices),
-      sendToCommandCentre(invoices),
-    ]).then(function () {
-      showNotification('Successfully synced ' + invoices.length + ' invoice(s) to Dopamine + Command Centre!');
-    }).catch(function (err) {
-      showNotification('Sync error — check browser console for details.', true);
-      console.error('Pixieset scraper sync error:', err);
-    });
-  }, 300);
-
-})();" class="install-button">Install Bookmarklet</a>
-
-            <div class="steps">
-                <h2 style="font-size: 18px; margin-bottom: 20px; color: #fff;">Installation Steps</h2>
-
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <p><strong>Drag the button above</strong> to your browser's bookmarks bar. Hold down your mouse button on "Install Bookmarklet" and drag it up to your bookmarks bar.</p>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <p>A browser dialog may appear asking to confirm adding the bookmark. Click <code>Add</code> or <code>OK</code>.</p>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <p>Navigate to <code>https://studio.pixieset.com/invoices</code> and make sure all invoices have loaded.</p>
-                    </div>
-                </div>
-
-                <div class="step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <p>Click the bookmarklet button in your bookmarks bar. It will scrape your invoices and sync them to both Dopamine and Command Centre.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="warning">
-                Note: If you don't see your bookmarks bar, press <code>Ctrl+Shift+B</code> (Windows/Linux) or <code>Cmd+Shift+B</code> (Mac) to show it.
-            </div>
-        </div>
-    </div>
+<div class="card">
+<h1>Pixieset Bookmarklet</h1>
+<p class="sub">Invoice Scraper for Pixieset Studio</p>
+<div class="drag">Drag the purple button below to your bookmarks bar:</div>
+<a href="javascript:(function () { 'use strict'; function toast(msg, err) { var d = document.createElement('div'); d.style.cssText = 'position:fixed;top:20px;right:20px;padding:14px 22px;border-radius:8px;font:600 14px/-apple-system,sans-serif;z-index:2147483647;max-width:340px;line-height:1.4;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity 0.3s;' + (err ? 'background:#ef4444' : 'background:#10b981'); d.textContent = msg; document.body.appendChild(d); setTimeout(function () { d.style.opacity = '0'; setTimeout(function () { d.remove(); }, 400); }, 5000); return d; } function scrape() { var rows = document.querySelectorAll('table tbody tr'); if (!rows.length) { toast('No invoice table found. Are you on studio.pixieset.com/invoices?', true); return null; } var invoices = []; rows.forEach(function (row) { var c = row.querySelectorAll('td'); if (c.length &lt; 7) return; var num = c[0].textContent.trim(); if (!num) return; var statusRaw = c[1].textContent.trim().toLowerCase(); var status = 'draft'; if (statusRaw.indexOf('paid') &gt;= 0 &amp;&amp; statusRaw.indexOf('unpaid') &lt; 0) status = 'paid'; else if (statusRaw.indexOf('unpaid') &gt;= 0 || statusRaw.indexOf('due') &gt;= 0) status = 'unpaid'; else if (statusRaw.indexOf('cancel') &gt;= 0) status = 'cancelled'; var amountStr = c[2].textContent.trim().replace(/[^\d.-]/g, ''); var amount = amountStr ? parseFloat(amountStr) : undefined; if (amount !== undefined &amp;&amp; isNaN(amount)) amount = undefined; // Client name: find first span with more than 2 chars (skips avatar initials) var clientName = ''; var spans = c[3].querySelectorAll('span'); for (var i = 0; i &lt; spans.length; i++) { var t = spans[i].textContent.trim(); if (t.length &gt; 2) { clientName = t; break; } } if (!clientName) clientName = c[3].textContent.trim(); var project = c[4].textContent.trim(); var due = c[5].textContent.trim(); // Created date: grab the first span to avoid picking up dropdown menu text var createdSpan = c[6].querySelector('span'); var created = createdSpan ? createdSpan.textContent.trim() : c[6].textContent.trim().split('\n')[0].trim(); invoices.push({ id: 'pix-' + num, number: num, amount: amount, client: clientName || undefined, project: project || undefined, status: status, dueDate: due || undefined, createdDate: created || undefined }); }); if (!invoices.length) { toast('Found rows but could not parse any invoices.', true); return null; } return invoices; } function syncDopamine(inv) { return fetch('https://dopamine-app.pages.dev/api/invoices', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(inv) }).then(function (r) { if (!r.ok) console.warn('Dopamine sync status:', r.status); }) .catch(function (e) { console.error('Dopamine sync error:', e); }); } function syncLegacy(inv) { return fetch('https://command-centre-rho.vercel.app/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'pixieset-invoices', value: inv }) }).then(function (r) { if (!r.ok) console.warn('Legacy sync status:', r.status); }) .catch(function (e) { console.error('Legacy sync error:', e); }); } // Run var n = toast('Scanning invoices...'); setTimeout(function () { var inv = scrape(); if (!inv) return; if (n &amp;&amp; n.parentNode) n.remove(); toast('Found ' + inv.length + ' invoice(s). Syncing...'); Promise.all([syncDopamine(inv), syncLegacy(inv)]).then(function () { toast('Synced ' + inv.length + ' invoice(s) to Dopamine!'); }).catch(function () { toast('Sync error. Check browser console.', true); }); }, 200); })();" class="btn">Sync Pixieset Invoices</a>
+<div class="steps">
+<h2 style="font-size:18px;margin-bottom:16px;color:#fff">How to use</h2>
+<div class="step"><div class="num">1</div><div><p><strong>Drag</strong> the purple button above to your bookmarks bar. Don't click it here (it won't work on this page).</p></div></div>
+<div class="step"><div class="num">2</div><div><p>Go to <code>studio.pixieset.com/invoices</code> and make sure your invoices have loaded.</p></div></div>
+<div class="step"><div class="num">3</div><div><p>Click the bookmarklet in your bookmarks bar. You will see a green notification confirming how many invoices were scraped and synced.</p></div></div>
+<div class="step"><div class="num">4</div><div><p>If you have multiple pages of invoices, navigate to each page and click the bookmarklet again.</p></div></div>
+</div>
+<div class="warn">If you can't see your bookmarks bar, press <code>Cmd+Shift+B</code> (Mac) or <code>Ctrl+Shift+B</code> (Windows/Linux).</div>
+</div>
 </body>
 </html>

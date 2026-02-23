@@ -1,179 +1,117 @@
 /**
  * Pixieset Invoice Scraper Bookmarklet
  *
- * HOW TO USE:
- * 1. Create a new bookmark in your browser
- * 2. Set the name to something like "Pixieset Scraper"
- * 3. Copy the entire code below (starting from the line after this comment block)
- * 4. Paste it into the URL field of the bookmark, prefixed with "javascript:"
- *    (i.e., javascript:( function() { ... })();)
- * 5. Navigate to https://studio.pixieset.com/invoices and click the bookmark
+ * Scrapes the invoices table from studio.pixieset.com/invoices
+ * and syncs data to Dopamine App and Command Centre.
  *
- * The bookmarklet will:
- * - Scrape invoice data from the Pixieset invoices page
- * - Send to both command-centre (legacy) and dopamine-app APIs
- * - Display success/error notifications
+ * Pixieset table columns (as of Feb 2026):
+ *   [0] Invoice #    [1] Status    [2] Amount
+ *   [3] Client       [4] Project   [5] Due On    [6] Created
+ *
+ * Note: page is paginated at 25 rows. Scrapes whatever page is visible.
  */
 
 javascript: (function () {
   'use strict';
 
-  // Helper to show toast notifications
-  function showNotification(message, isError) {
-    if (isError === undefined) isError = false;
-    var notification = document.createElement('div');
-    notification.style.cssText = [
-      'position:fixed',
-      'top:20px',
-      'right:20px',
-      'padding:12px 20px',
-      'border-radius:6px',
-      'font-size:14px',
-      'font-family:-apple-system,BlinkMacSystemFont,sans-serif',
-      'z-index:2147483647',
-      'max-width:320px',
-      'line-height:1.4',
-      'word-break:break-word',
-      'box-shadow:0 4px 16px rgba(0,0,0,0.25)',
-      isError ? 'background:#ef4444;color:#fff' : 'background:#10b981;color:#fff',
-    ].join(';');
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    setTimeout(function () {
-      notification.style.transition = 'opacity 0.3s';
-      notification.style.opacity = '0';
-      setTimeout(function () { notification.remove(); }, 350);
-    }, 5000);
-    return notification;
+  function toast(msg, err) {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;top:20px;right:20px;padding:14px 22px;border-radius:8px;font:600 14px/-apple-system,sans-serif;z-index:2147483647;max-width:340px;line-height:1.4;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity 0.3s;' + (err ? 'background:#ef4444' : 'background:#10b981');
+    d.textContent = msg;
+    document.body.appendChild(d);
+    setTimeout(function () { d.style.opacity = '0'; setTimeout(function () { d.remove(); }, 400); }, 5000);
+    return d;
   }
 
-  // Scrape invoices from the table — tries multiple selectors
-  function scrapeInvoices() {
-    var invoices = [];
-
-    // Try various selectors Pixieset might use
-    var rows = Array.from(
-      document.querySelectorAll('table tbody tr')
-    );
-
-    if (rows.length === 0) {
-      // Pixieset may use a list or div-based layout
-      rows = Array.from(document.querySelectorAll('[class*="invoice"][class*="row"], [class*="InvoiceRow"], [data-testid*="invoice"]'));
-    }
-
-    if (rows.length === 0) {
-      // Fallback: grab all <tr> on the page
-      rows = Array.from(document.querySelectorAll('tr')).filter(function (r) {
-        return r.querySelectorAll('td').length >= 3;
-      });
-    }
-
-    if (rows.length === 0) {
-      showNotification('No invoices found. Make sure you are on studio.pixieset.com/invoices and the page has loaded fully.', true);
+  function scrape() {
+    var rows = document.querySelectorAll('table tbody tr');
+    if (!rows.length) {
+      toast('No invoice table found. Are you on studio.pixieset.com/invoices?', true);
       return null;
     }
 
+    var invoices = [];
     rows.forEach(function (row) {
-      var cells = row.querySelectorAll('td');
-      if (cells.length < 3) return; // Skip rows with too few cells
+      var c = row.querySelectorAll('td');
+      if (c.length < 7) return;
 
-      try {
-        // Try to identify columns — Pixieset layout: #, Client, Project, Amount, Status, Due, Created
-        var invoiceNumber = (cells[0] ? cells[0].textContent : '').trim();
-        var clientName    = (cells[1] ? cells[1].textContent : '').trim();
-        var projectName   = (cells[2] ? cells[2].textContent : '').trim();
-        var amountStr     = (cells[3] ? cells[3].textContent : '').trim().replace(/[^\d.-]/g, '');
-        var statusStr     = (cells[4] ? cells[4].textContent : '').trim().toLowerCase();
-        var dueDate       = (cells[5] ? cells[5].textContent : '').trim();
-        var createdDate   = (cells[6] ? cells[6].textContent : '').trim();
+      var num = c[0].textContent.trim();
+      if (!num) return;
 
-        if (!invoiceNumber) return; // Skip rows without invoice number
+      var statusRaw = c[1].textContent.trim().toLowerCase();
+      var status = 'draft';
+      if (statusRaw.indexOf('paid') >= 0 && statusRaw.indexOf('unpaid') < 0) status = 'paid';
+      else if (statusRaw.indexOf('unpaid') >= 0 || statusRaw.indexOf('due') >= 0) status = 'unpaid';
+      else if (statusRaw.indexOf('cancel') >= 0) status = 'cancelled';
 
-        var amount = amountStr ? parseFloat(amountStr) : undefined;
+      var amountStr = c[2].textContent.trim().replace(/[^\d.-]/g, '');
+      var amount = amountStr ? parseFloat(amountStr) : undefined;
+      if (amount !== undefined && isNaN(amount)) amount = undefined;
 
-        var status = 'draft';
-        if (statusStr.includes('paid')) {
-          status = 'paid';
-        } else if (statusStr.includes('unpaid') || statusStr.includes('due')) {
-          status = 'unpaid';
-        } else if (statusStr.includes('cancel')) {
-          status = 'cancelled';
-        } else if (statusStr.includes('draft')) {
-          status = 'draft';
-        }
-
-        invoices.push({
-          id: 'pix-' + invoiceNumber,
-          number: invoiceNumber,
-          amount: (isNaN(amount) || amount === undefined) ? undefined : amount,
-          client: clientName || undefined,
-          project: projectName || undefined,
-          status: status,
-          dueDate: dueDate || undefined,
-          createdDate: createdDate || undefined,
-        });
-      } catch (err) {
-        console.error('Pixieset scraper: error parsing row', err);
+      // Client name: find first span with more than 2 chars (skips avatar initials)
+      var clientName = '';
+      var spans = c[3].querySelectorAll('span');
+      for (var i = 0; i < spans.length; i++) {
+        var t = spans[i].textContent.trim();
+        if (t.length > 2) { clientName = t; break; }
       }
+      if (!clientName) clientName = c[3].textContent.trim();
+
+      var project = c[4].textContent.trim();
+      var due = c[5].textContent.trim();
+
+      // Created date: grab the first span to avoid picking up dropdown menu text
+      var createdSpan = c[6].querySelector('span');
+      var created = createdSpan ? createdSpan.textContent.trim() : c[6].textContent.trim().split('\n')[0].trim();
+
+      invoices.push({
+        id: 'pix-' + num,
+        number: num,
+        amount: amount,
+        client: clientName || undefined,
+        project: project || undefined,
+        status: status,
+        dueDate: due || undefined,
+        createdDate: created || undefined
+      });
     });
 
-    if (invoices.length === 0) {
-      showNotification('Found table rows but could not extract any invoices. The page layout may have changed — please check the console for details.', true);
+    if (!invoices.length) {
+      toast('Found rows but could not parse any invoices.', true);
       return null;
     }
-
     return invoices;
   }
 
-  // Send to dopamine-app
-  function sendToDopamineApp(invoices) {
+  function syncDopamine(inv) {
     return fetch('https://dopamine-app.pages.dev/api/invoices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(invoices),
-    }).then(function (response) {
-      if (!response.ok) {
-        console.warn('Dopamine app sync returned non-200 status:', response.status);
-      }
-    }).catch(function (err) {
-      console.error('Error sending to dopamine-app:', err);
-    });
+      body: JSON.stringify(inv)
+    }).then(function (r) { if (!r.ok) console.warn('Dopamine sync status:', r.status); })
+      .catch(function (e) { console.error('Dopamine sync error:', e); });
   }
 
-  // Send to command-centre (legacy)
-  function sendToCommandCentre(invoices) {
+  function syncLegacy(inv) {
     return fetch('https://command-centre-rho.vercel.app/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: 'pixieset-invoices', value: invoices }),
-    }).then(function (response) {
-      if (!response.ok) {
-        console.warn('Command centre sync returned non-200 status:', response.status);
-      }
-    }).catch(function (err) {
-      console.error('Error sending to command-centre:', err);
-    });
+      body: JSON.stringify({ key: 'pixieset-invoices', value: inv })
+    }).then(function (r) { if (!r.ok) console.warn('Legacy sync status:', r.status); })
+      .catch(function (e) { console.error('Legacy sync error:', e); });
   }
 
-  // Main
-  var notice = showNotification('Pixieset Scraper: scanning page...');
-
+  // Run
+  var n = toast('Scanning invoices...');
   setTimeout(function () {
-    var invoices = scrapeInvoices();
-    if (!invoices) return;
-
-    if (notice && notice.parentNode) notice.remove();
-    showNotification('Found ' + invoices.length + ' invoice(s). Syncing...');
-
-    Promise.all([
-      sendToDopamineApp(invoices),
-      sendToCommandCentre(invoices),
-    ]).then(function () {
-      showNotification('Successfully synced ' + invoices.length + ' invoice(s) to Dopamine + Command Centre!');
-    }).catch(function (err) {
-      showNotification('Sync error — check browser console for details.', true);
-      console.error('Pixieset scraper sync error:', err);
+    var inv = scrape();
+    if (!inv) return;
+    if (n && n.parentNode) n.remove();
+    toast('Found ' + inv.length + ' invoice(s). Syncing...');
+    Promise.all([syncDopamine(inv), syncLegacy(inv)]).then(function () {
+      toast('Synced ' + inv.length + ' invoice(s) to Dopamine!');
+    }).catch(function () {
+      toast('Sync error. Check browser console.', true);
     });
-  }, 300);
-
+  }, 200);
 })();

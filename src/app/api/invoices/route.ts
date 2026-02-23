@@ -10,26 +10,36 @@ import { getKV } from '@/lib/cloudflare';
 
 const KV_KEY = 'invoices';
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function GET() {
   const kv = getKV();
-  if (!kv) return NextResponse.json([], { status: 200 });
+  if (!kv) return NextResponse.json([], { status: 200, headers: CORS_HEADERS });
 
   try {
     const raw = await kv.get(KV_KEY);
-    if (!raw) return NextResponse.json([], { status: 200 });
+    if (!raw) return NextResponse.json([], { status: 200, headers: CORS_HEADERS });
     return new Response(raw, {
       status: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
     });
   } catch (err) {
     console.error('Invoices GET error:', err);
-    return NextResponse.json({ error: 'Failed to read invoices' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to read invoices' }, { status: 500, headers: CORS_HEADERS });
   }
 }
 
 export async function POST(request: NextRequest) {
   const kv = getKV();
-  if (!kv) return NextResponse.json({ ok: true, persisted: false }, { status: 200 });
+  if (!kv) return NextResponse.json({ ok: true, persisted: false }, { status: 200, headers: CORS_HEADERS });
 
   try {
     const incoming: Invoice[] = await request.json();
@@ -42,10 +52,10 @@ export async function POST(request: NextRequest) {
     const merged = mergeInvoices(existing, incoming);
 
     await kv.put(KV_KEY, JSON.stringify(merged));
-    return NextResponse.json({ ok: true, persisted: true, count: merged.length });
+    return NextResponse.json({ ok: true, persisted: true, count: merged.length }, { headers: CORS_HEADERS });
   } catch (err) {
     console.error('Invoices POST error:', err);
-    return NextResponse.json({ error: 'Failed to save invoices' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to save invoices' }, { status: 500, headers: CORS_HEADERS });
   }
 }
 

@@ -5,7 +5,6 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getRequestContext } from '@cloudflare/next-on-pages';
 import { z } from 'zod';
 
 const ProjectOutputSchema = z.object({
@@ -57,14 +56,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
 
-    // Access Cloudflare env bindings via getRequestContext (edge runtime)
+    // Access Cloudflare env bindings via dynamic require (mirrors the sync route pattern)
     let apiKey: string | undefined;
     try {
-      const ctx = getRequestContext();
-      const cfEnv = ctx.env as Record<string, string | undefined>;
-      apiKey = cfEnv.GEMINI_API_KEY || cfEnv.GOOGLE_GENAI_API_KEY;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { getRequestContext } = require('@cloudflare/next-on-pages');
+      const ctx = getRequestContext() as { env: Record<string, string | undefined> };
+      apiKey = ctx?.env?.GEMINI_API_KEY || ctx?.env?.GOOGLE_GENAI_API_KEY;
     } catch {
-      // fallback — local dev or non-Cloudflare environment
+      // local dev or non-Cloudflare environment — fall through to process.env
     }
     apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
 

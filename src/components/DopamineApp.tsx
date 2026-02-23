@@ -68,6 +68,8 @@ const DopamineAppContent = ({ defaultView }) => {
   
   const [selectedProjectId, setSelectedProjectId] = useState(projectIdFromQuery || initialProjects[0].id);
   
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [isAddTaskModalOpen, setAddTaskModalOpen] = useState(false);
   const [isAddProjectModalOpen, setAddProjectModalOpen] = useState(false);
   const [isAddShootModalOpen, setAddShootModalOpen] = useState(false);
@@ -308,12 +310,14 @@ const DopamineAppContent = ({ defaultView }) => {
     const newPath = projectId ? `/?projectId=${projectId}` : '/';
     router.push(newPath);
     setActiveView('projects');
+    setIsSidebarOpen(false);
   };
-  
+
   const handleNavigate = (view) => {
     const path = view === 'projects' ? '/' : `/${view}`;
     router.push(path);
     setActiveView(view);
+    setIsSidebarOpen(false);
   };
 
   const handleAddShootFromInquiry = (inquiry) => {
@@ -758,12 +762,14 @@ const DopamineAppContent = ({ defaultView }) => {
         onAddProject={() => setAddProjectModalOpen(true)}
         onNavigate={handleNavigate}
         activeView={activeView}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">
          <header className="h-24 flex items-center justify-between px-6 lg:px-10 bg-background/80 backdrop-blur-sm sticky top-0 z-10 border-b border-border">
           <div className="flex items-center gap-4 md:hidden">
-            <button className="text-foreground"><Menu size={24} /></button>
+            <button className="text-foreground p-1" onClick={() => setIsSidebarOpen(true)}><Menu size={24} /></button>
             <h2 className="text-lg font-bold">Dopamine</h2>
           </div>
 

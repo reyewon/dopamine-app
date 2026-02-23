@@ -2,7 +2,7 @@
 import React from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { cn } from '@/lib/utils';
-import { Layout, Settings, Zap, Plus, Camera } from 'lucide-react';
+import { Layout, Settings, Zap, Plus, Camera, X } from 'lucide-react';
 
 const PROJECT_COLOURS = [
   'bg-primary',
@@ -13,9 +13,21 @@ const PROJECT_COLOURS = [
   'bg-rose-400',
 ];
 
-export const Sidebar = ({ projects, user, selectedProjectId, onSelectProject, onAddProject, onNavigate, activeView }) => {
+export const Sidebar = ({ projects, user, selectedProjectId, onSelectProject, onAddProject, onNavigate, activeView, isOpen, onClose }) => {
   return (
-    <aside className="hidden md:flex w-72 flex-col bg-card border-r border-border z-20 relative">
+    <>
+      {/* Mobile overlay backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      <aside className={cn(
+        "fixed inset-y-0 left-0 w-72 flex flex-col bg-card border-r border-border z-40 transition-transform duration-300 md:translate-x-0 md:static md:z-20",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
       {/* Colour accent bar along top */}
       <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-primary/40 via-primary to-primary/40" />
 
@@ -24,10 +36,17 @@ export const Sidebar = ({ projects, user, selectedProjectId, onSelectProject, on
         <div className="size-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground mr-3 shadow-md shadow-primary/25 shrink-0">
           <Zap size={20} strokeWidth={3} fill="currentColor" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h2 className="text-xl font-extrabold tracking-tight text-foreground leading-none">Dopamine</h2>
           <p className="text-[10px] text-muted-foreground/50 font-semibold mt-0.5 tracking-widest uppercase">Command Centre</p>
         </div>
+        <button
+          onClick={onClose}
+          className="md:hidden p-2 text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+          aria-label="Close menu"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto py-7 px-5 space-y-7">
@@ -134,5 +153,6 @@ export const Sidebar = ({ projects, user, selectedProjectId, onSelectProject, on
         </div>
       </div>
     </aside>
+    </>
   );
 };

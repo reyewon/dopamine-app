@@ -56,27 +56,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
     }
 
-    // Access Cloudflare env bindings via dynamic require (mirrors the sync route pattern)
-    let apiKey: string | undefined;
-    let ctxError: string | undefined;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { getRequestContext } = require('@cloudflare/next-on-pages');
-      const ctx = getRequestContext() as { env: Record<string, string | undefined> };
-      apiKey = ctx?.env?.GEMINI_API_KEY || ctx?.env?.GOOGLE_GENAI_API_KEY;
-    } catch (e) {
-      ctxError = e instanceof Error ? e.message : String(e);
-    }
-    apiKey = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
+    // In Cloudflare Pages with next-on-pages, wrangler.toml [vars] are exposed via process.env
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENAI_API_KEY;
 
     if (!apiKey) {
-      const processEnvKeys = typeof process !== 'undefined'
-        ? Object.keys(process.env).filter(k => k.includes('GEMINI') || k.includes('GOOGLE') || k.includes('GENAI')).join(',')
-        : 'no-process';
-      return NextResponse.json({
-        error: 'GEMINI_API_KEY not configured',
-        debug: { ctxError: ctxError ?? null, processEnvKeys }
-      }, { status: 500 });
+      return NextResponse.json({ error: 'GEMINI_API_KEY not configured' }, { status: 500 });
     }
 
     const geminiRes = await fetch(

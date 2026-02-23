@@ -156,8 +156,9 @@ const BreakdownOverlay = ({ onClose }) => {
 
 export const TaskCard = ({ task, onEditTask, onDeleteTask, onToggleTask, onToggleSubtask, onDeleteSubtask, onFileUpload, onRecordVoiceNote, onDeleteAttachment, onViewImage, projectId }) => {
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [justChecked, setJustChecked] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const activeSubtasks = task.subtasks?.filter(t => t.isDone).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
 
@@ -167,10 +168,15 @@ export const TaskCard = ({ task, onEditTask, onDeleteTask, onToggleTask, onToggl
       onFileUpload(task.id, file);
     }
   };
-  
+
+  const handleToggle = () => {
+    if (!task.isDone) setJustChecked(true);
+    onToggleTask(task.id);
+  };
+
   return (
-    <div className={cn("bg-card rounded-[2rem] shadow-sm border border-border relative group transition-all", {
-      "opacity-50": task.isDone
+    <div className={cn("bg-card rounded-[2rem] border border-border relative group task-card animate-slide-up", {
+      "opacity-60": task.isDone
     })}>
       {showBreakdown && <BreakdownOverlay onClose={() => setShowBreakdown(false)} />}
       
@@ -179,20 +185,31 @@ export const TaskCard = ({ task, onEditTask, onDeleteTask, onToggleTask, onToggl
           <div className="flex gap-5 items-start">
             <div className="pt-1">
               <label className={cn(!task.isSmartTask && "cursor-pointer")}>
-                  <input type="checkbox" checked={task.isDone} onChange={() => onToggleTask(task.id)} className="sr-only" disabled={task.isSmartTask} />
-                  <div className={cn('size-7 rounded-lg border-2 flex items-center justify-center transition-colors', 
-                      task.isDone ? 'bg-primary border-transparent' : 'bg-background border-border'
+                  <input type="checkbox" checked={task.isDone} onChange={handleToggle} className="sr-only" disabled={task.isSmartTask} />
+                  <div className={cn(
+                    'size-7 rounded-lg border-2 flex items-center justify-center transition-all duration-200',
+                    task.isDone
+                      ? 'bg-primary border-transparent shadow-sm shadow-primary/30'
+                      : 'bg-background border-border hover:border-primary/50'
                   )}>
-                      {task.isDone && <Check size={18} className="text-primary-foreground" />}
+                    {task.isDone && (
+                      <Check
+                        size={18}
+                        className={cn('text-primary-foreground', justChecked && 'animate-check-pop')}
+                      />
+                    )}
                   </div>
               </label>
             </div>
             <div>
-              <h3 className={cn("text-2xl font-bold leading-tight mb-2 flex items-center gap-2", {"line-through": task.isDone})}>
+              <h3 className={cn(
+                "text-2xl font-bold leading-tight mb-2 flex items-center gap-2 transition-all",
+                task.isDone ? "line-through text-muted-foreground" : ""
+              )}>
                 {task.isSmartTask && <Camera size={18} className="text-primary/70 shrink-0" />}
                 {task.name}
               </h3>
-              <p className="text-muted-foreground">{task.description}</p>
+              <p className={cn("transition-colors", task.isDone ? "text-muted-foreground/50" : "text-muted-foreground")}>{task.description}</p>
                {task.dueDate && (
                 <p className="text-sm text-primary font-medium mt-2">
                   Due: {format(new Date(task.dueDate), 'PPP')}

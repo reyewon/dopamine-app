@@ -54,7 +54,7 @@ export const MainContent = ({
     }
 
     return (
-        <div className="flex-1 overflow-y-auto px-6 lg:px-10 pb-20">
+        <div className="flex-1 overflow-y-auto scroll-slim px-6 lg:px-10 pb-20">
         <div className="max-w-4xl mx-auto space-y-8 pt-2">
             <ProjectHero project={project} onEditProject={onEditProject} />
             

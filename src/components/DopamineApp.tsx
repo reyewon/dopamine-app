@@ -653,7 +653,7 @@ const DopamineAppContent = ({ defaultView }) => {
       />
 
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-         <header className="h-24 flex items-center justify-between px-6 lg:px-10 bg-background sticky top-0 z-10 border-b border-border">
+         <header className="h-24 flex items-center justify-between px-6 lg:px-10 bg-background/80 backdrop-blur-sm sticky top-0 z-10 border-b border-border">
           <div className="flex items-center gap-4 md:hidden">
             <button className="text-foreground"><Menu size={24} /></button>
             <h2 className="text-lg font-bold">Dopamine</h2>
@@ -671,14 +671,14 @@ const DopamineAppContent = ({ defaultView }) => {
           </div>
 
           <div className="flex items-center gap-4 ml-auto">
-            <form 
+            <form
               onSubmit={(e) => e.preventDefault()}
-              className="hidden md:flex items-center h-12 px-5 rounded-full bg-card shadow-sm w-72 border border-border focus-within:border-primary transition-colors"
+              className="hidden md:flex items-center h-11 px-4 rounded-xl bg-card shadow-sm w-64 border border-border focus-within:border-primary/50 focus-within:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)] transition-all duration-200"
             >
-              <Search size={18} className="opacity-30 mr-3" />
-              <input 
-                className="bg-transparent border-none text-sm w-full outline-none text-foreground placeholder:opacity-30" 
-                placeholder="Search all tasks..." 
+              <Search size={16} className="opacity-30 mr-3 shrink-0" />
+              <input
+                className="bg-transparent border-none text-sm w-full outline-none text-foreground placeholder:opacity-40"
+                placeholder="Search tasks…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />

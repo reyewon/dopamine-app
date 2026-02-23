@@ -55,7 +55,24 @@ const DopamineAppContent = ({ defaultView }) => {
     }
   });
 
-  const [user, setUser] = useState(initialUser);
+  const [user, setUser] = useState(() => {
+    if (typeof window === 'undefined') return initialUser;
+    try {
+      const saved = localStorage.getItem('dopamine-user-v1');
+      if (!saved) return initialUser;
+      return { ...initialUser, ...JSON.parse(saved) };
+    } catch {
+      return initialUser;
+    }
+  });
+
+  const handleUpdateUser = (updated: Partial<typeof initialUser>) => {
+    setUser(prev => {
+      const next = { ...prev, ...updated };
+      try { localStorage.setItem('dopamine-user-v1', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   // When KV data arrives, merge it in (KV is source of truth across devices)
   useEffect(() => {
@@ -761,7 +778,7 @@ const DopamineAppContent = ({ defaultView }) => {
 
     switch (activeView) {
       case 'settings':
-        return <SettingsView user={user} />;
+        return <SettingsView user={user} onUpdateUser={handleUpdateUser} />;
       case 'shoots':
         return (
           <div className="flex-1 flex flex-col overflow-y-auto">

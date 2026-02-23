@@ -70,7 +70,7 @@ const IncomeDashboard = ({ shoots }) => {
 };
 
 
-const ShootsView = ({ shoots, onAddShoot, onEditShoot, onShootUpdate }) => {
+const ShootsView = ({ shoots, onAddShoot, onEditShoot, onShootUpdate, onDeleteShoot }) => {
     const upcomingShoots = shoots.filter(shoot => !shoot.progress.exportUpload);
     const completedShoots = shoots.filter(shoot => shoot.progress.exportUpload);
 
@@ -82,11 +82,12 @@ const ShootsView = ({ shoots, onAddShoot, onEditShoot, onShootUpdate }) => {
                     <h2 className="text-xl font-bold text-foreground mb-6">Upcoming</h2>
                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2200px]:grid-cols-5 gap-8">
                         {upcomingShoots.map(shoot => (
-                            <ShootCard 
-                                key={shoot.id} 
-                                shoot={shoot} 
+                            <ShootCard
+                                key={shoot.id}
+                                shoot={shoot}
                                 onEditShoot={onEditShoot}
                                 onShootUpdate={onShootUpdate}
+                                onDeleteShoot={onDeleteShoot}
                             />
                         ))}
                         <AddShootCard onClick={onAddShoot} />
@@ -105,11 +106,12 @@ const ShootsView = ({ shoots, onAddShoot, onEditShoot, onShootUpdate }) => {
                                 <AccordionContent>
                                     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2200px]:grid-cols-5 gap-8 pt-6">
                                         {completedShoots.map(shoot => (
-                                            <ShootCard 
-                                                key={shoot.id} 
-                                                shoot={shoot} 
+                                            <ShootCard
+                                                key={shoot.id}
+                                                shoot={shoot}
                                                 onEditShoot={onEditShoot}
                                                 onShootUpdate={onShootUpdate}
+                                                onDeleteShoot={onDeleteShoot}
                                             />
                                         ))}
                                     </div>

@@ -22,11 +22,31 @@ export interface EmailInquiry {
   addedAsShoot: boolean;
 }
 
+export interface GmailStatus {
+  photography: boolean;
+  personal: boolean;
+}
+
 const POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 export function useEmailInquiries() {
   const [inquiries, setInquiries] = useState<EmailInquiry[]>([]);
+  const [gmailStatus, setGmailStatus] = useState<GmailStatus>({ photography: false, personal: false });
+  const [statusLoaded, setStatusLoaded] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchStatus = useCallback(async () => {
+    try {
+      const res = await fetch('/api/gmail/status');
+      if (res.ok) {
+        const data = await res.json() as GmailStatus;
+        setGmailStatus(data);
+        setStatusLoaded(true);
+      }
+    } catch {
+      // silently fail
+    }
+  }, []);
 
   const fetchInquiries = useCallback(async () => {
     try {
@@ -79,16 +99,17 @@ export function useEmailInquiries() {
   }, []);
 
   useEffect(() => {
-    // Load on mount
+    // Load status and inquiries on mount
+    fetchStatus();
     fetchInquiries();
     // Poll every 5 minutes
     intervalRef.current = setInterval(pollNow, POLL_INTERVAL);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchInquiries, pollNow]);
+  }, [fetchStatus, fetchInquiries, pollNow]);
 
   const unreadCount = inquiries.filter(i => !i.read && !i.addedAsShoot).length;
 
-  return { inquiries, unreadCount, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow };
+  return { inquiries, unreadCount, gmailStatus, statusLoaded, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow };
 }

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
-import { User, Mail, MapPin, Calendar, MoreHorizontal, Edit, Wind, Upload, FileText, X, Check, FileBadge, Phone, Share2, Wallet } from 'lucide-react';
+import { User, Mail, MapPin, Calendar, MoreHorizontal, Edit, Wind, Upload, FileText, X, Check, FileBadge, Phone, Share2, Wallet, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, differenceInHours, formatDistanceToNow } from 'date-fns';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
@@ -80,7 +80,7 @@ const VibeCheckAsset = ({ asset, onDelete }) => {
 };
 
 
-export const ShootCard = ({ shoot, onEditShoot, onShootUpdate }) => {
+export const ShootCard = ({ shoot, onEditShoot, onShootUpdate, onDeleteShoot }) => {
     const locationUrl = shoot.location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shoot.location)}` : '#';
     const showWeather = shoot.shootDate && differenceInHours(new Date(shoot.shootDate), new Date()) <= 48 && differenceInHours(new Date(shoot.shootDate), new Date()) > 0;
     
@@ -154,9 +154,22 @@ export const ShootCard = ({ shoot, onEditShoot, onShootUpdate }) => {
                                     <span>Edit Shoot</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem>
-                                     <Share2 className="mr-2 h-4 w-4" />
+                                    <Share2 className="mr-2 h-4 w-4" />
                                     <span>Share</span>
                                 </DropdownMenuItem>
+                                {onDeleteShoot && (
+                                  <DropdownMenuItem
+                                    className="text-red-500 focus:text-red-500"
+                                    onClick={() => {
+                                      if (window.confirm(`Delete shoot "${shoot.title}"? This cannot be undone.`)) {
+                                        onDeleteShoot(shoot.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Delete Shoot</span>
+                                  </DropdownMenuItem>
+                                )}
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>

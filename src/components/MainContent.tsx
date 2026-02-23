@@ -7,16 +7,17 @@ import { useSearch } from '@/hooks/useSearch';
 import SearchResults from './SearchResults';
 
 
-export const MainContent = ({ 
-  project, 
+export const MainContent = ({
+  project,
   allProjects,
   onSelectProject,
-  onAddTask, 
-  onEditProject, 
+  onAddTask,
+  onEditProject,
+  onDeleteProject,
   onEditTask,
   onDeleteTask,
-  onToggleTask, 
-  onToggleSubtask, 
+  onToggleTask,
+  onToggleSubtask,
   onFileUpload,
   onRecordVoiceNote,
   onDeleteAttachment,
@@ -56,7 +57,7 @@ export const MainContent = ({
     return (
         <div className="flex-1 overflow-y-auto scroll-slim px-6 lg:px-10 pb-20">
         <div className="max-w-4xl mx-auto space-y-8 pt-2">
-            <ProjectHero project={project} onEditProject={onEditProject} />
+            <ProjectHero project={project} onEditProject={onEditProject} onDeleteProject={onDeleteProject} />
             
             <div className="flex items-center justify-between py-2">
             <h2 className="text-xl font-bold text-foreground">

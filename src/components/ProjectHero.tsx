@@ -1,8 +1,8 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { Clock, Edit3, Share2, Camera, CheckCircle2 } from 'lucide-react';
+import { Clock, Edit3, Share2, Camera, CheckCircle2, Trash2 } from 'lucide-react';
 
-export const ProjectHero = ({ project, onEditProject }) => {
+export const ProjectHero = ({ project, onEditProject, onDeleteProject }) => {
   if (!project) return null;
 
   const taskCount = project.tasks.length;
@@ -82,6 +82,19 @@ export const ProjectHero = ({ project, onEditProject }) => {
           <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-white text-foreground text-sm font-bold hover:border-primary/30 hover:shadow-sm transition-all duration-200 shadow-sm">
             <Share2 size={15} /> <span className="hidden sm:inline">Share</span>
           </button>
+          {!project.smartProject && onDeleteProject && (
+            <button
+              onClick={() => {
+                if (window.confirm(`Delete project "${project.name}"? This cannot be undone.`)) {
+                  onDeleteProject(project.id);
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 bg-white text-red-500 text-sm font-bold hover:bg-red-50 hover:border-red-300 transition-all duration-200 shadow-sm"
+              title="Delete project"
+            >
+              <Trash2 size={15} /> <span className="hidden sm:inline">Delete</span>
+            </button>
+          )}
         </div>
       </div>
 

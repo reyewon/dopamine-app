@@ -85,7 +85,7 @@ const DopamineAppContent = ({ defaultView }) => {
   const [activeView, setActiveView] = useState(defaultView || 'projects');
 
   // Email inquiries from Gmail
-  const { inquiries, unreadCount, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow } = useEmailInquiries();
+  const { inquiries, unreadCount, gmailStatus, statusLoaded, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow } = useEmailInquiries();
   const [showInquiriesPanel, setShowInquiriesPanel] = useState(false);
 
   // Sync to localStorage + KV whenever data changes
@@ -602,7 +602,7 @@ const DopamineAppContent = ({ defaultView }) => {
   };
 
   const handleShootUpdate = (shootId, updatedData) => {
-    setShoots(prevShoots => 
+    setShoots(prevShoots =>
       produce(prevShoots, draft => {
         const shoot = draft.find(s => s.id === shootId);
         if (shoot) {
@@ -610,6 +610,32 @@ const DopamineAppContent = ({ defaultView }) => {
         }
       })
     );
+  };
+
+  const handleDeleteShoot = (shootId) => {
+    setShoots(prevShoots => prevShoots.filter(s => s.id !== shootId));
+    toast({
+      title: "Shoot deleted",
+      description: "The shoot has been removed.",
+    });
+  };
+
+  const handleDeleteProject = (projectId) => {
+    const project = projects.find(p => p.id === projectId);
+    if (project?.smartProject) {
+      toast({ variant: "destructive", title: "Cannot delete", description: "The Shoots project is system-managed." });
+      return;
+    }
+    const newProjects = projects.filter(p => p.id !== projectId);
+    setProjects(newProjects);
+    // Select first available project
+    if (selectedProjectId === projectId && newProjects.length > 0) {
+      setSelectedProjectId(newProjects[0].id);
+    }
+    toast({
+      title: "Project deleted",
+      description: `${project?.name ?? 'Project'} has been removed.`,
+    });
   };
 
 
@@ -657,11 +683,12 @@ const DopamineAppContent = ({ defaultView }) => {
         return (
           <div className="flex-1 flex flex-col overflow-y-auto">
             {contentHeader}
-            <ShootsView 
-              shoots={shoots} 
+            <ShootsView
+              shoots={shoots}
               onAddShoot={() => setAddShootModalOpen(true)}
               onEditShoot={setEditingShoot}
               onShootUpdate={handleShootUpdate}
+              onDeleteShoot={handleDeleteShoot}
             />
           </div>
         );
@@ -675,6 +702,7 @@ const DopamineAppContent = ({ defaultView }) => {
               allProjects={projects}
               onAddTask={() => setAddTaskModalOpen(true)}
               onEditProject={() => setEditProjectModalOpen(true)}
+              onDeleteProject={handleDeleteProject}
               onEditTask={setEditingTask}
               onDeleteTask={handleDeleteTask}
               onToggleTask={handleToggleTask}
@@ -785,11 +813,12 @@ const DopamineAppContent = ({ defaultView }) => {
               </div>
 
               <div className="flex-1 overflow-y-auto">
-                {inquiries.length === 0 ? (
+                {/* Show connect prompt only if tokens are definitely not stored */}
+                {statusLoaded && !gmailStatus.photography && !gmailStatus.personal ? (
                   <div className="flex flex-col items-center justify-center h-full text-white/30 p-8 text-center">
                     <div className="text-4xl mb-4">📬</div>
-                    <p className="text-sm">No enquiries yet.</p>
-                    <p className="text-xs mt-2">Connect your Gmail accounts to start detecting shoot enquiries automatically.</p>
+                    <p className="text-sm">Connect your Gmail accounts</p>
+                    <p className="text-xs mt-2">Start detecting shoot enquiries automatically.</p>
                     <div className="mt-6 flex flex-col gap-2 w-full">
                       <a href="/api/gmail/auth?account=photography" className="block text-center text-xs py-2 px-4 rounded bg-white/10 hover:bg-white/20 text-white transition-colors">
                         Connect photography@ryanstanikk.co.uk
@@ -798,6 +827,22 @@ const DopamineAppContent = ({ defaultView }) => {
                         Connect rstanikk@gmail.com
                       </a>
                     </div>
+                  </div>
+                ) : inquiries.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-white/30 p-8 text-center">
+                    <div className="text-4xl mb-4">📬</div>
+                    {statusLoaded ? (
+                      <>
+                        <p className="text-sm">No enquiries yet.</p>
+                        <p className="text-xs mt-2">Gmail is connected. New shoot enquiries will appear here automatically.</p>
+                        <div className="mt-4 flex flex-col gap-1 w-full">
+                          {gmailStatus.photography && <p className="text-xs text-green-400/60">✓ photography@ryanstanikk.co.uk connected</p>}
+                          {gmailStatus.personal && <p className="text-xs text-green-400/60">✓ rstanikk@gmail.com connected</p>}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs mt-2 animate-pulse">Checking Gmail status…</p>
+                    )}
                   </div>
                 ) : (
                   <div className="divide-y divide-white/5">
@@ -850,18 +895,24 @@ const DopamineAppContent = ({ defaultView }) => {
                 )}
               </div>
 
-              {inquiries.length > 0 && (
-                <div className="p-3 border-t border-white/10">
-                  <div className="flex gap-2">
-                    <a href="/api/gmail/auth?account=photography" className="flex-1 text-center text-xs py-1.5 rounded border border-white/20 hover:border-white/40 text-white/50 hover:text-white transition-colors">
-                      photography@
-                    </a>
-                    <a href="/api/gmail/auth?account=personal" className="flex-1 text-center text-xs py-1.5 rounded border border-white/20 hover:border-white/40 text-white/50 hover:text-white transition-colors">
-                      rstanikk@gmail
-                    </a>
-                  </div>
+              <div className="p-3 border-t border-white/10">
+                <div className="flex gap-2">
+                  <a
+                    href="/api/gmail/auth?account=photography"
+                    className={`flex-1 text-center text-xs py-1.5 rounded border transition-colors ${gmailStatus.photography ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
+                    title={gmailStatus.photography ? 'Reconnect photography@ryanstanikk.co.uk' : 'Connect photography@ryanstanikk.co.uk'}
+                  >
+                    {gmailStatus.photography ? '✓ photography@' : 'Connect photography@'}
+                  </a>
+                  <a
+                    href="/api/gmail/auth?account=personal"
+                    className={`flex-1 text-center text-xs py-1.5 rounded border transition-colors ${gmailStatus.personal ? 'border-green-500/40 text-green-400/70 hover:text-green-400' : 'border-white/20 text-white/40 hover:border-white/40 hover:text-white'}`}
+                    title={gmailStatus.personal ? 'Reconnect rstanikk@gmail.com' : 'Connect rstanikk@gmail.com'}
+                  >
+                    {gmailStatus.personal ? '✓ rstanikk@gmail' : 'Connect rstanikk@gmail'}
+                  </a>
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}

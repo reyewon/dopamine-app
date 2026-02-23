@@ -23,6 +23,7 @@ import { EditShootModal } from './EditShootModal';
 import { MagicAiInput } from './MagicAiInput';
 import type { SmartInputParserOutput } from '@/ai/flows/smart-input-parser';
 import { add } from 'date-fns';
+import { useEmailInquiries } from '@/hooks/useEmailInquiries';
 
 
 const DopamineAppContent = ({ defaultView }) => {
@@ -82,6 +83,10 @@ const DopamineAppContent = ({ defaultView }) => {
   const { searchTerm, setSearchTerm } = useSearch();
 
   const [activeView, setActiveView] = useState(defaultView || 'projects');
+
+  // Email inquiries from Gmail
+  const { inquiries, unreadCount, markAsRead, markInquiryAsAdded, dismissInquiry, pollNow } = useEmailInquiries();
+  const [showInquiriesPanel, setShowInquiriesPanel] = useState(false);
 
   // Sync to localStorage + KV whenever data changes
   useEffect(() => {
@@ -281,6 +286,53 @@ const DopamineAppContent = ({ defaultView }) => {
     const path = view === 'projects' ? '/' : `/${view}`;
     router.push(path);
     setActiveView(view);
+  };
+
+  const handleAddShootFromInquiry = (inquiry) => {
+    // Pre-fill the new shoot form with extracted data
+    const safeCreateDate = (dateString) => {
+      if (!dateString) return null;
+      const date = new Date(`${dateString}T12:00:00Z`);
+      return isNaN(date.getTime()) ? null : date;
+    };
+
+    const shootDate = safeCreateDate(inquiry.extractedData.shootDate);
+    let editDueDate = safeCreateDate(inquiry.extractedData.shootDate);
+    if (shootDate && !editDueDate) {
+      editDueDate = add(shootDate, { days: 14 });
+    }
+
+    const newShoot = {
+      title: inquiry.extractedData.shootType ? `${inquiry.extractedData.shootType} shoot` : inquiry.subject,
+      clientName: inquiry.extractedData.clientName ?? '',
+      clientEmail: inquiry.extractedData.clientEmail ?? '',
+      clientContact: inquiry.extractedData.clientPhone ?? '',
+      shootDate: shootDate,
+      editDueDate: editDueDate,
+      location: inquiry.extractedData.location ?? '',
+      price: '',
+      frictionLog: inquiry.extractedData.notes ?? '',
+    };
+
+    const updatedShoot = {
+      id: `shoot-${Date.now()}`,
+      ...newShoot,
+      assets: [],
+      invoiceStatus: 'Unsent',
+      sendSneakPeeks: false,
+      progress: { shoot: false, tickoff: false, cull: false, edit: false, exportUpload: false }
+    };
+
+    const newShoots = produce(shoots, draft => {
+      draft.unshift(updatedShoot);
+    });
+    setShoots(newShoots);
+    setShowInquiriesPanel(false);
+    markInquiryAsAdded(inquiry.id);
+    toast({
+      title: "Shoot created!",
+      description: `"${updatedShoot.title}" has been added from the email inquiry.`,
+    });
   };
 
   const selectedProject = projects.find(p => p.id === selectedProjectId);
@@ -696,13 +748,123 @@ const DopamineAppContent = ({ defaultView }) => {
                 Saved
               </div>
             )}
-            <button className="size-12 rounded-full bg-card flex items-center justify-center shadow-sm border border-border hover:text-primary transition-colors">
-              <Bell size={20} />
+            <button
+              onClick={() => { setShowInquiriesPanel(p => !p); if (unreadCount > 0) pollNow(); }}
+              className="relative p-2 rounded-full hover:bg-white/10 transition-colors"
+              title="Email enquiries"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
 
         {renderContent()}
+
+        {/* Email Enquiries Panel */}
+        {showInquiriesPanel && (
+          <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setShowInquiriesPanel(false)}>
+            <div className="relative w-full max-w-md bg-gray-900 shadow-2xl flex flex-col h-full overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <div>
+                  <h2 className="text-white font-semibold text-lg">Email Enquiries</h2>
+                  <p className="text-white/50 text-xs mt-0.5">AI-detected shoot enquiries from your inbox</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={pollNow} className="text-white/50 hover:text-white text-xs px-2 py-1 rounded border border-white/20 hover:border-white/40 transition-colors">
+                    Check now
+                  </button>
+                  <button onClick={() => setShowInquiriesPanel(false)} className="text-white/50 hover:text-white p-1 rounded transition-colors">
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto">
+                {inquiries.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-white/30 p-8 text-center">
+                    <div className="text-4xl mb-4">📬</div>
+                    <p className="text-sm">No enquiries yet.</p>
+                    <p className="text-xs mt-2">Connect your Gmail accounts to start detecting shoot enquiries automatically.</p>
+                    <div className="mt-6 flex flex-col gap-2 w-full">
+                      <a href="/api/gmail/auth?account=photography" className="block text-center text-xs py-2 px-4 rounded bg-white/10 hover:bg-white/20 text-white transition-colors">
+                        Connect photography@ryanstanikk.co.uk
+                      </a>
+                      <a href="/api/gmail/auth?account=personal" className="block text-center text-xs py-2 px-4 rounded bg-white/10 hover:bg-white/20 text-white transition-colors">
+                        Connect rstanikk@gmail.com
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                    {inquiries.map(inquiry => (
+                      <div
+                        key={inquiry.id}
+                        className={`p-4 ${!inquiry.read ? 'bg-white/5' : ''}`}
+                        onClick={() => markAsRead(inquiry.id)}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              {!inquiry.read && <span className="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0" />}
+                              <p className="text-white text-sm font-medium truncate">{inquiry.subject}</p>
+                            </div>
+                            <p className="text-white/50 text-xs mt-0.5 truncate">{inquiry.from}</p>
+                            <p className="text-white/40 text-xs mt-1 line-clamp-2">{inquiry.body.slice(0, 120)}...</p>
+                            {inquiry.extractedData && (
+                              <div className="mt-2 flex flex-wrap gap-1">
+                                {inquiry.extractedData.clientName && <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full">👤 {inquiry.extractedData.clientName}</span>}
+                                {inquiry.extractedData.shootType && <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full">📷 {inquiry.extractedData.shootType}</span>}
+                                {inquiry.extractedData.shootDate && <span className="text-xs bg-white/10 text-white/70 px-2 py-0.5 rounded-full">📅 {inquiry.extractedData.shootDate}</span>}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={e => { e.stopPropagation(); dismissInquiry(inquiry.id); }}
+                            className="text-white/30 hover:text-white/70 text-xs p-1 flex-shrink-0 transition-colors"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        {!inquiry.addedAsShoot && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation();
+                              handleAddShootFromInquiry(inquiry);
+                            }}
+                            className="mt-3 w-full text-xs py-1.5 px-3 rounded bg-blue-600/80 hover:bg-blue-600 text-white transition-colors font-medium"
+                          >
+                            + Add as Shoot
+                          </button>
+                        )}
+                        {inquiry.addedAsShoot && (
+                          <p className="mt-2 text-xs text-green-400/70">✓ Added as shoot</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {inquiries.length > 0 && (
+                <div className="p-3 border-t border-white/10">
+                  <div className="flex gap-2">
+                    <a href="/api/gmail/auth?account=photography" className="flex-1 text-center text-xs py-1.5 rounded border border-white/20 hover:border-white/40 text-white/50 hover:text-white transition-colors">
+                      photography@
+                    </a>
+                    <a href="/api/gmail/auth?account=personal" className="flex-1 text-center text-xs py-1.5 rounded border border-white/20 hover:border-white/40 text-white/50 hover:text-white transition-colors">
+                      rstanikk@gmail
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </main>
 

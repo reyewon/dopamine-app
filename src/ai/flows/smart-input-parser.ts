@@ -1,7 +1,6 @@
-'use server';
 /**
- * @fileOverview Smart Input Parser - uses the Gemini REST API directly (no Genkit).
- * Fully edge-compatible: uses only fetch(), works on Cloudflare Workers.
+ * @fileOverview Smart Input Parser - type definitions.
+ * The actual Gemini API call lives in /api/ai/route.ts (edge runtime).
  */
 
 import { z } from 'zod';

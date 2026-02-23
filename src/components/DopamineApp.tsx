@@ -21,7 +21,7 @@ import ShootsView from './ShootsView';
 import { AddShootModal } from './AddShootModal';
 import { EditShootModal } from './EditShootModal';
 import { MagicAiInput } from './MagicAiInput';
-import { smartInputParser, SmartInputParserOutput } from '@/ai/flows/smart-input-parser';
+import type { SmartInputParserOutput } from '@/ai/flows/smart-input-parser';
 import { add } from 'date-fns';
 
 
@@ -97,7 +97,16 @@ const DopamineAppContent = ({ defaultView }) => {
     startAiTransition(async () => {
       try {
         console.log("Sending prompt to Gemini for parsing...");
-        const result: SmartInputParserOutput = await smartInputParser({ prompt });
+        const res = await fetch('/api/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(err.error || `API error ${res.status}`);
+        }
+        const result: SmartInputParserOutput = await res.json();
         
         if (result.type === 'project') {
           const newProject = {

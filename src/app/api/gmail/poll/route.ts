@@ -128,7 +128,7 @@ Return ONLY valid JSON, no markdown:
 {"isInquiry": true/false, "clientName": "name or null", "clientEmail": "reply-to email or null", "clientPhone": "UK format or null", "shootType": "e.g. wedding/portrait/commercial/product/event or null", "shootDate": "YYYY-MM-DD or null", "location": "location or null", "notes": "budget, brief, or other key details or null"}`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

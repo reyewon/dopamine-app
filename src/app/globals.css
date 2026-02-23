@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 10% 97%; /* #F2F0E9 - Claude Paper */
+    --foreground: 0 0% 10%; /* #191919 - Soft Black */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    /* "Claude Coral" - Burnt Sienna */
+    --primary: 15 66% 60%; /* #D97757 */
+    --primary-foreground: 0 0% 100%;
+
+    /* Muted Charcoal/Forest for accents */
+    --secondary: 180 11% 27%; /* #3F4E4F */
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 240 10% 97%; /* #F2F0E9 */
+    --muted-foreground: 0 0% 42%; /* #6B6B6B */
+    
+    /* Pale Sand */
+    --accent: 33 58% 88%; /* #ECD0B4 */
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 48 17% 90%; /* #E6E4DD - Subtle stone border */
+    --input: 48 17% 90%;
+    --ring: 15 66% 60%; /* #D97757 */
+    --radius: 1.5rem;
+  }
+
+  .dark {
+     --background: 0 0% 10%;
+    --foreground: 48 17% 90%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 48 17% 90%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 48 17% 90%;
+
+    --primary: 15 66% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 180 11% 37%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 33 58% 88%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 15 66% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+.animate-shake { animation: shake 0.3s ease-in-out; }

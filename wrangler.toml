@@ -1,0 +1,12 @@
+name = "dopamine-app"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
+
+[[kv_namespaces]]
+binding = "DOPAMINE_KV"
+id = "PLACEHOLDER_KV_ID"
+
+[vars]
+GEMINI_API_KEY = ""
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = ""

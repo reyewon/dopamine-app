@@ -7,5 +7,9 @@ pages_build_output_dir = ".vercel/output/static"
 binding = "DOPAMINE_KV"
 id = "87ca3bca728943c9bd81d93320dede26"
 
+[[r2_buckets]]
+binding = "DOPAMINE_AUDIO"
+bucket_name = "dopamine-audio"
+
 [vars]
 NEXT_PUBLIC_GOOGLE_MAPS_API_KEY = "AIzaSyDbslFWVHP3f8D42vJ5Uh1RwBJk13FRaes"

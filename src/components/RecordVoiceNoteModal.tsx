@@ -15,6 +15,7 @@ const formatTime = (seconds) => {
 export const RecordVoiceNoteModal = ({ isOpen, onClose, onSave }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [isBlocked, setIsBlocked] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [elapsedTime, setElapsedTime] = useState(0);
     const mediaRecorderRef = useRef(null);
     const audioChunksRef = useRef([]);
@@ -67,12 +68,52 @@ export const RecordVoiceNoteModal = ({ isOpen, onClose, onSave }) => {
         }
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (audioChunksRef.current.length === 0) return;
 
+        setIsSaving(true);
+
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
+        let audioUrl: string;
+
+        try {
+            // Try to upload to R2
+            const formData = new FormData();
+            formData.append('file', audioBlob, 'recording.webm');
+
+            const uploadResponse = await fetch('/api/audio/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                audioUrl = uploadData.url;
+                toast({
+                    title: "Success",
+                    description: "Audio uploaded to cloud storage.",
+                });
+            } else {
+                // Fall back to blob URL
+                audioUrl = URL.createObjectURL(audioBlob);
+                toast({
+                    variant: "default",
+                    title: "Info",
+                    description: "Audio saved locally (cloud storage not available).",
+                });
+            }
+        } catch (err) {
+            // Fall back to blob URL if upload fails
+            audioUrl = URL.createObjectURL(audioBlob);
+            console.error('Audio upload error:', err);
+            toast({
+                variant: "default",
+                title: "Info",
+                description: "Audio saved locally (cloud storage not available).",
+            });
+        }
+
+        setIsSaving(false);
         onSave({ url: audioUrl, duration: formatTime(elapsedTime) });
         handleClose();
     };
@@ -116,10 +157,10 @@ export const RecordVoiceNoteModal = ({ isOpen, onClose, onSave }) => {
                 </div>
 
                 <DialogFooter>
-                    <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
-                    <Button type="button" onClick={handleSave} disabled={elapsedTime === 0 || isRecording || isBlocked}>
+                    <Button type="button" variant="ghost" onClick={handleClose} disabled={isSaving}>Cancel</Button>
+                    <Button type="button" onClick={handleSave} disabled={elapsedTime === 0 || isRecording || isBlocked || isSaving}>
                         <Save className="mr-2 h-4 w-4" />
-                        Save Note
+                        {isSaving ? 'Saving...' : 'Save Note'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

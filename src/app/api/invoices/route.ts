@@ -6,23 +6,9 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-
-interface CloudflareEnv {
-  DOPAMINE_KV?: KVNamespace;
-}
+import { getKV } from '@/lib/cloudflare';
 
 const KV_KEY = 'invoices';
-
-function getKV(): KVNamespace | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getRequestContext } = require('@cloudflare/next-on-pages');
-    const ctx = getRequestContext() as { env: CloudflareEnv };
-    return ctx?.env?.DOPAMINE_KV ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET() {
   const kv = getKV();

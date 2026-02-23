@@ -9,22 +9,7 @@
 
 export const runtime = 'edge';
 
-interface CloudflareEnv {
-  DOPAMINE_KV?: KVNamespace;
-}
-
-function getKV(): KVNamespace | null {
-  try {
-    // @cloudflare/next-on-pages exposes the Cloudflare environment via getRequestContext
-    // We use a dynamic require so local dev doesn't crash
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getRequestContext } = require('@cloudflare/next-on-pages');
-    const ctx = getRequestContext() as { env: CloudflareEnv };
-    return ctx?.env?.DOPAMINE_KV ?? null;
-  } catch {
-    return null;
-  }
-}
+import { getKV } from '@/lib/cloudflare';
 
 export async function GET() {
   const kv = getKV();

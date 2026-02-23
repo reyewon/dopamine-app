@@ -5,21 +5,7 @@
 export const runtime = 'edge';
 
 import { NextRequest, NextResponse } from 'next/server';
-
-interface CloudflareEnv {
-  DOPAMINE_AUDIO?: R2Bucket;
-}
-
-function getR2(): R2Bucket | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getRequestContext } = require('@cloudflare/next-on-pages');
-    const ctx = getRequestContext() as { env: CloudflareEnv };
-    return ctx?.env?.DOPAMINE_AUDIO ?? null;
-  } catch {
-    return null;
-  }
-}
+import { getR2 } from '@/lib/cloudflare';
 
 export async function GET(
   _req: NextRequest,
